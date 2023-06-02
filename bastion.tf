@@ -31,6 +31,11 @@ resource "azurerm_network_interface" "bastion_internal" {
   }
 }
 
+resource "azurerm_network_interface_security_group_association" "bastion_external" {
+  network_interface_id      = azurerm_network_interface.bastion_external.id
+  network_security_group_id = azurerm_network_security_group.external.id
+}
+
 resource "azurerm_linux_virtual_machine" "bastion" {
   name = "bastion"
 
@@ -40,8 +45,14 @@ resource "azurerm_linux_virtual_machine" "bastion" {
   # Allegedly Azure's smallest VM size
   size = "Standard_B1ls"
 
-  admin_username = "cloud"
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "0001-com-ubuntu-server-jammy"
+    sku       = "22_04-lts-gen2"
+    version   = "latest"
+  }
 
+  admin_username = "cloud"
   admin_ssh_key {
     username   = "cloud"
     public_key = file(var.bootstrap_ssh_key)
@@ -55,12 +66,5 @@ resource "azurerm_linux_virtual_machine" "bastion" {
   os_disk {
     caching              = "None"
     storage_account_type = "Standard_LRS"
-  }
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "0001-com-ubuntu-server-jammy"
-    sku       = "22_04-lts-gen2"
-    version   = "latest"
   }
 }
