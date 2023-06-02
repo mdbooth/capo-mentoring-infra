@@ -44,7 +44,7 @@ resource "azurerm_linux_virtual_machine" "hosts" {
   admin_username = "cloud"
   admin_ssh_key {
     username   = "cloud"
-    public_key = file(var.bootstrap_ssh_key)
+    public_key = local.bootstrap_ssh_key
   }
 
   network_interface_ids = [

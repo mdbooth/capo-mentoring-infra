@@ -6,8 +6,8 @@ variable "location" {
   default = "uksouth"
 }
 
-variable "bootstrap_ssh_key" {
-  default = "~/.ssh/id_rsa_yubikey.pub"
+variable "bootstrap_github_ssh_key" {
+  default = "mdbooth"
 }
 
 variable "address_space" {
@@ -25,7 +25,13 @@ variable "hosts" {
   }]
 }
 
+data "curl" "bootstrap_github_ssh_key" {
+  uri         = format("https://github.com/%s.keys", var.bootstrap_github_ssh_key)
+  http_method = "GET"
+}
+
 locals {
-  external_cidr = cidrsubnet(var.address_space, 3, 0)
-  internal_cidr = cidrsubnet(var.address_space, 3, 1)
+  external_cidr     = cidrsubnet(var.address_space, 3, 0)
+  internal_cidr     = cidrsubnet(var.address_space, 3, 1)
+  bootstrap_ssh_key = data.curl.bootstrap_github_ssh_key.response
 }
