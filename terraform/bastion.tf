@@ -26,7 +26,7 @@ resource "azurerm_network_interface" "bastion_internal" {
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.external.id
+    subnet_id                     = azurerm_subnet.internal.id
     private_ip_address_allocation = "Dynamic"
   }
 }
