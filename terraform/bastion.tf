@@ -1,3 +1,5 @@
+# Public IP of the bastion host
+# This is the only static public IP
 resource "azurerm_public_ip" "bastion" {
   name                = "bastion"
   resource_group_name = azurerm_resource_group.rg.name
@@ -5,7 +7,8 @@ resource "azurerm_public_ip" "bastion" {
   allocation_method   = "Static"
 }
 
-
+# External interface of bastion host
+# Incoming SSH and wireguard allowed on this interface
 resource "azurerm_network_interface" "bastion_external" {
   name                = "bastion-external"
   resource_group_name = azurerm_resource_group.rg.name
@@ -19,6 +22,7 @@ resource "azurerm_network_interface" "bastion_external" {
   }
 }
 
+# Internal interface of bastion host
 resource "azurerm_network_interface" "bastion_internal" {
   name                = "bastion-internal"
   resource_group_name = azurerm_resource_group.rg.name

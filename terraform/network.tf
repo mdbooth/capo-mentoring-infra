@@ -1,3 +1,5 @@
+# All VMs are attached to this vnet.
+# It has separate internal and external subnets created below.
 resource "azurerm_virtual_network" "vnet" {
   name                = var.env_name
   address_space       = [var.address_space]
@@ -5,6 +7,8 @@ resource "azurerm_virtual_network" "vnet" {
   location            = azurerm_resource_group.rg.location
 }
 
+# External subnet used only by bastion.
+# See 'external' security group below.
 resource "azurerm_subnet" "external" {
   name                 = "external"
   virtual_network_name = azurerm_virtual_network.vnet.name
@@ -12,6 +16,9 @@ resource "azurerm_subnet" "external" {
   resource_group_name  = azurerm_resource_group.rg.name
 }
 
+# Internal subnet used by all VMs.
+# Direct incoming traffic is not permitted to this subnet. It is routed from
+# the bastion.
 resource "azurerm_subnet" "internal" {
   name                 = "internal"
   virtual_network_name = azurerm_virtual_network.vnet.name
