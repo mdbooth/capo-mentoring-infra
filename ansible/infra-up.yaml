@@ -7,7 +7,7 @@
   tasks:
   - name: Terraform deploy
     community.general.terraform:
-      project_path: '../terraform'
+      project_path: "../terraform"
       state: present
       variables: "{{ terraform_vars }}"
     register: terraform
@@ -72,8 +72,24 @@
 
 - hosts: localhost
   gather_facts: false
+  vars:
+    bastion_public_key: "{{ hostvars['bastion']['wg_public_key'] }}"
+    bastion_public_ip: "{{ hostvars['bastion']['ansible_host'] }}"
+  vars_files:
+  - wireguard.yml
   
   tasks:
-  - copy:
-      content: "{{ hostvars['bastion']['wg_public_key'] }}"
-      dest: "bastion-wg.key"
+  - name: Create wireguard configs directory
+    ansible.builtin.file:
+      path: "../wg"
+      state: directory
+      mode: "0750"
+    register: wg_dir
+
+  - name: Write wireguard configs
+    ansible.builtin.template:
+      src: templates/wg.conf.j2
+      dest: "{{ wg_dir.path }}/{{ item.key }}.conf"
+    vars:
+      user_wireguard_ip: "{{ item.value.allowed_ips }}"
+    loop: "{{ wireguard_users | dict2items }}"

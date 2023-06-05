@@ -1,5 +1,6 @@
 ---
 wireguard_cidr: 192.168.232.0/23
+bastion_wireguard_ip: "{{ wireguard_cidr | ansible.utils.nthhost(1) }}/32"
 wireguard_users:
   mbooth_wsl:
     public_key: xeWF5EtbXMECGZ3R3DQWrsYbNUd0/tsn55PL3vY21DI=

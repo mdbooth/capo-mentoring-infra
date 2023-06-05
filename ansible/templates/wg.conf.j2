@@ -1,0 +1,8 @@
+[Interface]
+PrivateKey = << YOUR PRIVATE KEY HERE >>
+Address = {{ user_wireguard_ip }}
+
+[Peer]
+PublicKey = {{ bastion_public_key }}
+AllowedIPs = {{ bastion_wireguard_ip }}, {{ internal_cidr }}
+Endpoint = {{ bastion_public_ip }}:51820

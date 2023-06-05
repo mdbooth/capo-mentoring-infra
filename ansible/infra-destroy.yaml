@@ -12,6 +12,6 @@
 
   - name: Terraform destroy
     community.general.terraform:
-      project_path: '../terraform'
+      project_path: "../terraform"
       state: absent
       variables: "{{ terraform_vars }}"
