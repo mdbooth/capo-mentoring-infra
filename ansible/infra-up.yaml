@@ -93,3 +93,7 @@
     vars:
       user_wireguard_ip: "{{ item.value.allowed_ips }}"
     loop: "{{ wireguard_users | dict2items }}"
+
+- hosts: openstack
+  vars:
+    nova_disk: /dev/disk/azure/scsi1/lun10

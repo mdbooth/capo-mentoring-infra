@@ -68,3 +68,23 @@ resource "azurerm_linux_virtual_machine" "hosts" {
     disk_size_gb         = 50
   }
 }
+
+# Each host has a separate disk for nova ephemeral storage on lun10
+resource "azurerm_managed_disk" "hosts_nova" {
+  count               = length(var.hosts)
+  name                = format("host-%02d-nova", count.index)
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  storage_account_type = "Standard_LRS"
+  create_option        = "Empty"
+  disk_size_gb         = var.nova_disk_size
+}
+
+resource "azurerm_virtual_machine_data_disk_attachment" "hosts_nova" {
+  count              = length(var.hosts)
+  managed_disk_id    = azurerm_managed_disk.hosts_nova[count.index].id
+  virtual_machine_id = azurerm_linux_virtual_machine.hosts[count.index].id
+  lun                = "10"
+  caching            = "None"
+}
