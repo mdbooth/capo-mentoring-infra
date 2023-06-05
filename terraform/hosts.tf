@@ -52,9 +52,9 @@ resource "azurerm_linux_virtual_machine" "hosts" {
     version   = "latest"
   }
 
-  admin_username = "cloud"
+  admin_username = var.ssh_user
   admin_ssh_key {
-    username   = "cloud"
+    username   = var.ssh_user
     public_key = local.bootstrap_ssh_key
   }
 

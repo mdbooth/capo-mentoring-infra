@@ -1,0 +1,8 @@
+---
+ssh_user: cloud
+github_ssh_keys:
+- mdbooth
+- stephenfin
+vnet_address_space: 192.168.224.0/21
+external_cidr: '{{ vnet_address_space | ansible.utils.ipsubnet(24, 1) }}'
+internal_cidr: '{{ vnet_address_space | ansible.utils.ipsubnet(24, 2) }}'

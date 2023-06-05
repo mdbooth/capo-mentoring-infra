@@ -2,7 +2,7 @@
 # It has separate internal and external subnets created below.
 resource "azurerm_virtual_network" "vnet" {
   name                = var.env_name
-  address_space       = [var.address_space]
+  address_space       = [var.vnet_address_space]
   resource_group_name = azurerm_resource_group.rg.name
   location            = azurerm_resource_group.rg.location
 }
@@ -12,7 +12,7 @@ resource "azurerm_virtual_network" "vnet" {
 resource "azurerm_subnet" "external" {
   name                 = "external"
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [local.external_cidr]
+  address_prefixes     = [var.external_cidr]
   resource_group_name  = azurerm_resource_group.rg.name
 }
 
@@ -22,7 +22,7 @@ resource "azurerm_subnet" "external" {
 resource "azurerm_subnet" "internal" {
   name                 = "internal"
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = [local.internal_cidr]
+  address_prefixes     = [var.internal_cidr]
   resource_group_name  = azurerm_resource_group.rg.name
 }
 

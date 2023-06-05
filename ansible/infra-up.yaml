@@ -1,0 +1,79 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+  - terraform_vars.yml
+
+  tasks:
+  - name: Terraform deploy
+    community.general.terraform:
+      project_path: '../terraform'
+      state: present
+      variables: "{{ terraform_vars }}"
+    register: terraform
+
+  - name: Extract bastion public ip
+    ansible.builtin.set_fact:
+      bastion_public_ip: "{{ terraform.outputs.bastion.value.public_ip }}"
+
+  - name: Add bastion host
+    ansible.builtin.add_host:
+      name: bastion
+      ansible_host: "{{ bastion_public_ip }}"
+      ansible_user: "{{ ssh_user }}"
+      # Disable host key checking
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+      internal_ip: "{{ terraform.outputs.bastion.value.private_ip }}"
+
+  - name: Add OpenStack hosts
+    ansible.builtin.add_host:
+      name: "{{ item.name }}"
+      groups:
+      - openstack
+      ansible_host: "{{ item.private_ip }}"
+      ansible_user: "{{ ssh_user }}"
+      # Use bastion as jump host, disabling host key checking everywhere
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {{ ssh_user }}@{{ bastion_public_ip }}\""
+    loop: "{{ terraform.outputs.hosts.value }}"
+
+- hosts: bastion openstack
+  become: yes
+  roles:
+  - ssh_keys
+
+- hosts: bastion
+  become: yes
+  vars_files:
+  - wireguard.yml
+  vars:
+    wireguard_addresses:
+    # bastion gets the first IP in the wireguard subnet
+    - "{{ wireguard_cidr | ansible.utils.nthhost(1) }}/32"
+    # bastion can also route to the internal subnet
+    - "{{ vnet_address_space }}"
+    wireguard_endpoint: "{{ ansible_host }}"
+    wireguard_postup:
+    - "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    - "iptables -t nat -A POSTROUTING -o eth1 -j SNAT --to-source {{ internal_ip }}"
+    wireguard_unmanaged_peers: "{{ wireguard_users }}"
+  roles:
+  - githubixx.ansible_role_wireguard
+
+  tasks:
+  - name: Extract WireGuard public key
+    ansible.builtin.shell:
+      cmd: awk '/^PrivateKey\s*=\s*/ {print $3}' /etc/wireguard/wg0.conf | wg pubkey
+    register: wg_pubkey
+
+  - name: Store WireGuard public key
+    ansible.builtin.set_fact:
+      wg_public_key: "{{ wg_pubkey.stdout | trim }}"
+
+- hosts: localhost
+  gather_facts: false
+  
+  tasks:
+  - copy:
+      content: "{{ hostvars['bastion']['wg_public_key'] }}"
+      dest: "bastion-wg.key"

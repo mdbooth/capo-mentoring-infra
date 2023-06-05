@@ -4,4 +4,6 @@ roles:
     version: "14.0.0"
 
 collections:
+  - name: ansible.posix
   - name: ansible.utils
+  - name: community.general

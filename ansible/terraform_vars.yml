@@ -1,0 +1,9 @@
+---
+terraform_vars:
+  env_name: "mbooth-test"
+  location: "uksouth"
+  ssh_user: "{{ ssh_user }}"
+  vnet_address_space: "{{ vnet_address_space }}"
+  external_cidr: "{{ external_cidr }}"
+  internal_cidr: "{{ internal_cidr }}"
+  bootstrap_github_ssh_key: "{{ github_ssh_keys[0] }}"

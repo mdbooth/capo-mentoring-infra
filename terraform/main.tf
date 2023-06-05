@@ -22,33 +22,34 @@ provider "azurerm" {
 provider "curl" {}
 
 ##
-## Variable definitions
+## Variable definitions. Set by ansible.
 ##
 
 # Environment name. Used for naming resources
-variable "env_name" {
-  default = "mbooth-test"
-}
+variable "env_name" {}
 
 # Azure location where all resources will be created
-variable "location" {
-  default = "uksouth"
-}
+variable "location" {}
+
+# ssh_user is the default user we create with ssh login via key and sudo access
+variable "ssh_user" {}
 
 # A GitHub identity whose ssh key will be added to all VMs on creation
 # Azurerm only seems to allow a single SSH key, so other keys will be added by
 # ansible later.
-variable "bootstrap_github_ssh_key" {
-  default = "mdbooth"
-}
+variable "bootstrap_github_ssh_key" {}
 
 # Address space of the internal vnet
 # At least 2 /24 subnets will be created from this address space:
 # * external is used only by the bastion
 # * internal is used by OpenStack hosts
-variable "address_space" {
-  default = "192.168.224.0/21"
-}
+variable "vnet_address_space" {}
+
+# A /24 subnet within vnet_address_space used by the bastion
+variable "external_cidr" {}
+
+# A /24 subnet within vnet_address_space used by all hosts
+variable "internal_cidr" {}
 
 # OpenStack hosts to create
 # Hosts will be named host-NN, starting from host-00
@@ -65,8 +66,8 @@ variable "hosts" {
     extra_disks = list(number)
   }))
   default = [{
-    size        = "Standard_E2as_v5"
-    extra_disks = [500]
+      size = "Standard_E2as_v5"
+      extra_disks = [500]
   }]
 }
 
@@ -80,8 +81,6 @@ data "curl" "bootstrap_github_ssh_key" {
 }
 
 locals {
-  external_cidr     = cidrsubnet(var.address_space, 3, 0)
-  internal_cidr     = cidrsubnet(var.address_space, 3, 1)
   bootstrap_ssh_key = data.curl.bootstrap_github_ssh_key.response
 }
 
@@ -89,21 +88,19 @@ locals {
 ## Outputs
 ##
 
-output "bastion_ip" {
-  value = azurerm_public_ip.bastion.ip_address
+output "bastion" {
+  value = {
+    name       = "bastion",
+    public_ip  = azurerm_public_ip.bastion.ip_address
+    private_ip = azurerm_network_interface.bastion_internal.private_ip_address
+  }
 }
 
 output "hosts" {
-  value = concat(
-    [{
-      name       = "bastion",
-      private_ip = azurerm_network_interface.bastion_internal.private_ip_address
-    }],
-    [for i, interface in azurerm_network_interface.hosts : {
-      name       = format("host-%02d", i)
-      private_ip = interface.private_ip_address
-    }]
-  )
+  value = [for i, interface in azurerm_network_interface.hosts : {
+    name       = format("host-%02d", i)
+    private_ip = interface.private_ip_address
+  }]
 }
 
 ##

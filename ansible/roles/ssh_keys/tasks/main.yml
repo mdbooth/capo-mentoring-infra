@@ -1,0 +1,7 @@
+---
+- name: Add github ssh keys to default user
+  ansible.posix.authorized_key:
+    user: "{{ ssh_user }}"
+    key: "https://github.com/{{ item }}.keys"
+  loop: "{{ github_ssh_keys }}"
+

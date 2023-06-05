@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+  - terraform_vars.yml
+
+  tasks:
+  - name: Terraform destroy
+    community.general.terraform:
+      project_path: '../terraform'
+      state: absent
+      variables: "{{ terraform_vars }}"
