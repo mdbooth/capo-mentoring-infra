@@ -78,7 +78,7 @@
     bastion_public_ip: "{{ hostvars['bastion']['ansible_host'] }}"
   vars_files:
   - wireguard.yml
-  
+
   tasks:
   - name: Create wireguard configs directory
     ansible.builtin.file:
