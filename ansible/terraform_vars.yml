@@ -1,6 +1,6 @@
 ---
 terraform_vars:
-  env_name: "mbooth-test"
+  env_name: "openstack-test"
   location: "uksouth"
   ssh_user: "{{ ssh_user }}"
   vnet_address_space: "{{ vnet_address_space }}"
