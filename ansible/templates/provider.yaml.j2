@@ -1,0 +1,9 @@
+network:
+  tunnels:
+    provider0:
+      mode: vxlan
+      id: 16
+      local: {{ configs[inventory_hostname].local_ip }}
+      remote: {{ configs[inventory_hostname].remote_ip }}
+      addresses: [ {{ configs[inventory_hostname].tunnel_ip }} ]
+  version: 2

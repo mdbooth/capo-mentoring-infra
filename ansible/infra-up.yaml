@@ -50,12 +50,12 @@
     wireguard_addresses:
     # bastion gets the first IP in the wireguard subnet
     - "{{ wireguard_cidr | ansible.utils.nthhost(1) }}/32"
-    # bastion can also route to the internal subnet
-    - "{{ vnet_address_space }}"
     wireguard_endpoint: "{{ ansible_host }}"
     wireguard_postup:
     - "echo 1 > /proc/sys/net/ipv4/ip_forward"
+    # SNAT to the internal and provider networks
     - "iptables -t nat -A POSTROUTING -o eth1 -j SNAT --to-source {{ internal_ip }}"
+    - "iptables -t nat -A POSTROUTING -o provider0 -j SNAT --to-source {{ provider_cidr | ansible.utils.nthhost(1) }}"
     wireguard_unmanaged_peers: "{{ wireguard_users }}"
   roles:
   - githubixx.ansible_role_wireguard
@@ -94,6 +94,25 @@
     vars:
       user_wireguard_ip: "{{ item.value.allowed_ips }}"
     loop: "{{ wireguard_users | dict2items }}"
+
+## Configure provider0 interface on bastion and first host
+- hosts: bastion host-00
+  become: true
+  tasks:
+  - name: Write provider netplan
+    ansible.builtin.template:
+      src: templates/provider.yaml.j2
+      dest: "/etc/netplan/60-provider.yaml"
+    vars:
+      configs:
+        bastion:
+          local_ip: "{{ hostvars['bastion']['internal_ip'] }}"
+          remote_ip: "{{ hostvars['host-00']['ansible_host'] }}"
+          tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(1) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
+        host-00:
+          local_ip: "{{ hostvars['host-00']['ansible_host'] }}"
+          remote_ip: "{{ hostvars['bastion']['internal_ip'] }}"
+          tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(2) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
 
 - hosts: openstack
   vars:
