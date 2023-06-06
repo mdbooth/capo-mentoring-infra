@@ -59,7 +59,7 @@ resource "azurerm_linux_virtual_machine" "bastion" {
   admin_username = var.ssh_user
   admin_ssh_key {
     username   = var.ssh_user
-    public_key = local.bootstrap_ssh_key
+    public_key = var.bootstrap_ssh_key
   }
 
   network_interface_ids = [

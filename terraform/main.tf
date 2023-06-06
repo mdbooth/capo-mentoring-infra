@@ -70,17 +70,9 @@ variable "hosts" {
 # ephemeral storage
 variable "nova_disk_size" {}
 
-##
-## Computed variables
-##
-
-data "local_file" "bootstrap_local_ssh_key" {
-  filename = pathexpand("~/.ssh/id_rsa.pub")
-}
-
-locals {
-  bootstrap_ssh_key = data.local_file.bootstrap_local_ssh_key.content
-}
+# An SSH key to add to all VMs on creation
+# Other keys will be added by ansible subsequently
+variable "bootstrap_ssh_key" {}
 
 ##
 ## Outputs
