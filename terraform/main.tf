@@ -75,9 +75,6 @@ variable "hosts" {
 # ephemeral storage
 variable "nova_disk_size" {}
 
-# The cidr of a provider network hosted on host-00
-variable "provider_cidr" {}
-
 ##
 ## Computed variables
 ##

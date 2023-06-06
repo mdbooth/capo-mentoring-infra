@@ -63,21 +63,3 @@ resource "azurerm_network_security_group" "internal" {
 
   # External inbound traffic is not permitted
 }
-
-resource "azurerm_route_table" "bastion" {
-    name = "bastion"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-
-  route {
-      name = "provider"
-      address_prefix = var.provider_cidr
-      next_hop_type = "VirtualAppliance"
-      next_hop_in_ip_address = azurerm_network_interface.hosts[0].private_ip_address
-  }
-}
-
-resource "azurerm_subnet_route_table_association" "bastion" {
-    subnet_id = azurerm_subnet.external.id
-    route_table_id = azurerm_route_table.bastion.id
-}

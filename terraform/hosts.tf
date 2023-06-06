@@ -21,7 +21,6 @@ resource "azurerm_network_interface" "hosts" {
   name                = format("host-%02d", count.index)
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
-  enable_ip_forwarding = true
 
   ip_configuration {
     name                          = "internal"

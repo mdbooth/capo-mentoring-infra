@@ -94,29 +94,6 @@
       user_wireguard_ip: "{{ item.value.allowed_ips }}"
     loop: "{{ wireguard_users | dict2items }}"
 
-## The first host has the virtual provider network
-- hosts: host-00
-  become: true
-  roles:
-  - ansible-role-systemd_networkd
-  vars:
-    systemd_netdevs:
-    - NetDev:
-        Name: provider0
-        Kind: dummy
-    - NetDev:
-        Name: tunnel0
-        Kind: vxlanZZ
-    systemd_networks:
-    - interface: "provider0"
-      address: "{{ provider_cidr | ansible.utils.nthhost(1) | ansible.utils.ipaddr('host/prefix') }}"
-
-  tasks:
-  # The systemd_networkd role doesn't seem to do this itself
-  - name: Reload networkd
-    shell:
-      cmd: networkctl reload
-
 - hosts: openstack
   vars:
     nova_disk: /dev/disk/azure/scsi1/lun10
