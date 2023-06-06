@@ -41,6 +41,27 @@
   become: yes
   roles:
   - ssh_keys
+  - hosts
+
+- hosts: bastion
+  tasks:
+  - name: Generate keypair
+    community.crypto.openssh_keypair:
+      path: "~/.ssh/id_rsa"
+      type: rsa
+    register: bastion_ssh_keypair
+
+  - name: Store bastion public key
+    ansible.builtin.set_fact:
+      bastion_public_key: "{{ bastion_ssh_keypair.public_key }}"
+
+- hosts: openstack
+  tasks:
+    - name: Set authorized key
+      ansible.posix.authorized_key:
+        user: "{{ ssh_user }}"
+        state: present
+        key: "{{ hostvars['bastion']['bastion_public_key'] }}"
 
 - hosts: bastion
   become: yes
@@ -77,7 +98,7 @@
     bastion_public_ip: "{{ hostvars['bastion']['ansible_host'] }}"
   vars_files:
   - wireguard.yml
-  
+
   tasks:
   - name: Create wireguard configs directory
     ansible.builtin.file:
