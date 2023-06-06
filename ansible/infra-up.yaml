@@ -115,5 +115,37 @@
           tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(2) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
 
 - hosts: openstack
+  become: true
   vars:
     nova_disk: /dev/disk/azure/scsi1/lun10
+    cinder_disk: /dev/disk/azure/scsi1/lun11
+    fstype: ext4
+  tasks:
+  - name: Format nova disk
+    community.general.filesystem:
+      dev: "{{ nova_disk }}"
+      fstype: "{{ fstype }}"
+
+  - name: Create /var/lib/nova directory
+    ansible.builtin.file:
+      path: "/var/lib/nova"
+      state: directory
+      mode: "0750"
+
+  - name: Mount /var/lib/nova
+    ansible.posix.mount:
+      path: "/var/lib/nova"
+      src: "{{ nova_disk }}"
+      fstype: "{{ fstype }}"
+      state: mounted
+
+  - name: "Check for cinder disk"
+    ansible.builtin.stat:
+      path: "{{ cinder_disk }}"
+    register: cinder_check
+
+  - name: Create a volume group for cinder
+    community.general.lvg:
+      vg: cinder_volumes
+      pvs: "{{ cinder_disk }}"
+    when: cinder_check.stat.exists
