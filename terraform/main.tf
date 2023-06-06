@@ -34,11 +34,6 @@ variable "location" {}
 # ssh_user is the default user we create with ssh login via key and sudo access
 variable "ssh_user" {}
 
-# A GitHub identity whose ssh key will be added to all VMs on creation
-# Azurerm only seems to allow a single SSH key, so other keys will be added by
-# ansible later.
-variable "bootstrap_github_ssh_key" {}
-
 # Address space of the internal vnet
 # At least 2 /24 subnets will be created from this address space:
 # * external is used only by the bastion
@@ -79,13 +74,12 @@ variable "nova_disk_size" {}
 ## Computed variables
 ##
 
-data "curl" "bootstrap_github_ssh_key" {
-  uri         = format("https://github.com/%s.keys", var.bootstrap_github_ssh_key)
-  http_method = "GET"
+data "local_file" "bootstrap_local_ssh_key" {
+  filename = pathexpand("~/.ssh/id_rsa.pub")
 }
 
 locals {
-  bootstrap_ssh_key = data.curl.bootstrap_github_ssh_key.response
+  bootstrap_ssh_key = data.local_file.bootstrap_local_ssh_key.content
 }
 
 ##
