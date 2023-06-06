@@ -70,6 +70,7 @@
     ansible.builtin.set_fact:
       wg_public_key: "{{ wg_pubkey.stdout | trim }}"
 
+## Write stub wireguard configs locally
 - hosts: localhost
   gather_facts: false
   vars:
