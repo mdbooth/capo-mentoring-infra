@@ -8,3 +8,4 @@ terraform_vars:
   internal_cidr: "{{ internal_cidr }}"
   bootstrap_github_ssh_key: "{{ github_ssh_keys[0] }}"
   nova_disk_size: 250
+  provider_cidr: "{{ provider_cidr }}"

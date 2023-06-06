@@ -3,7 +3,16 @@ roles:
   - name: githubixx.ansible_role_wireguard
     version: "14.0.0"
 
+  # I can't make this work. Something doesn't like an SSL cert. Install it manually with:
+  #   ansible-galaxy install git+https://opendev.org/openstack/ansible-role-systemd_networkd,stable/2023.1
+  #- name: https://opendev.org/openstack/ansible-role-systemd_networkd
+  #  version: stable/2023.1
+  #  type: git
+
 collections:
   - name: ansible.posix
   - name: ansible.utils
   - name: community.general
+  - name: https://opendev.org/openstack/ansible-config_template
+    version: master
+    type: git
