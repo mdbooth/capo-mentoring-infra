@@ -134,6 +134,9 @@
           local_ip: "{{ hostvars['host-00']['ansible_host'] }}"
           remote_ip: "{{ hostvars['bastion']['internal_ip'] }}"
           tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(2) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
+  - name: Apply provider netplan
+    ansible.builtin.shell:
+      cmd: netplan apply
 
 - hosts: openstack
   become: true
