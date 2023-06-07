@@ -1,0 +1,157 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+  - terraform_vars.yml
+  name: Get hosts from terraform
+  tasks:
+  - name: Extract terraform variables
+    community.general.terraform:
+      project_path: "../terraform"
+      state: present
+      variables: "{{ terraform_vars }}"
+      overwrite_init: false
+    check_mode: true
+    register: terraform
+
+  - name: Extract bastion public ip
+    ansible.builtin.set_fact:
+      bastion_public_ip: "{{ terraform.outputs.bastion.value.public_ip }}"
+
+  - name: Add bastion host
+    ansible.builtin.add_host:
+      name: bastion
+      ansible_host: "{{ bastion_public_ip }}"
+      ansible_user: "{{ ssh_user }}"
+      # Disable host key checking
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+      internal_ip: "{{ terraform.outputs.bastion.value.private_ip }}"
+
+  - name: Add OpenStack hosts
+    ansible.builtin.add_host:
+      name: "{{ item.name }}"
+      groups:
+      - openstack
+      ansible_host: "{{ item.private_ip }}"
+      ansible_user: "{{ ssh_user }}"
+      # Use bastion as jump host, disabling host key checking everywhere
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {{ ssh_user }}@{{ bastion_public_ip }}\""
+    loop: "{{ terraform.outputs.hosts.value }}"
+
+- hosts: bastion
+  name: Deploy OpenStack using Kolla-Ansible
+  tasks:
+  - name: Update all packages to their latest version
+    ansible.builtin.apt:
+      name: "*"
+      state: latest
+    become: true
+
+  - name: Install packages
+    ansible.builtin.apt:
+      pkg:
+      - git
+      - python3-dev
+      - libffi-dev
+      - gcc
+      - libssl-dev
+      - python3-venv
+    become: true
+
+  - name: Create /etc/kolla directory
+    ansible.builtin.file:
+      path: /etc/kolla
+      state: directory
+      mode: '0755'
+      owner: "{{ ssh_user }}"
+      group: "{{ ssh_user }}"
+    become: true
+
+  - name: Copy inventory file
+    ansible.builtin.copy:
+      src: files/inventory
+      dest: /etc/kolla/inventory
+
+  # This is already a jinja2 template, so we need to use custom markers
+  # This also affects templated variables in `vars`
+  # https://github.com/ansible/ansible/issues/43886
+  - name: Copy globals.yml file
+    ansible.builtin.template:
+      src: templates/globals.yml.j2
+      dest: /etc/kolla/globals.yml
+      block_start_string: "<%"
+      block_end_string: "%>"
+      variable_start_string: "<<"
+      variable_end_string: ">>"
+    vars:
+      internal_vip_address: "<< hostvars['host-00']['ansible_host'] >>"
+
+  - name: Upgrade pip
+    ansible.builtin.pip:
+      name: pip
+      extra_args: --upgrade
+      virtualenv: /etc/kolla/venv
+      virtualenv_command: python3 -m venv
+
+  - name: Install Ansible
+    ansible.builtin.pip:
+      name:
+      - ansible-core>=2.13,<=2.14.2
+      - ansible>=6,<=7.2.0
+      virtualenv: /etc/kolla/venv
+      virtualenv_command: python3 -m venv
+
+  - name: Install Kolla-Ansible
+    ansible.builtin.pip:
+      name: git+https://opendev.org/openstack/kolla-ansible@master
+      virtualenv: /etc/kolla/venv
+      virtualenv_command: python3 -m venv
+
+  - name: Initial configuration
+    ansible.builtin.shell: |
+      set -x
+      . /etc/kolla/venv/bin/activate
+      cp -r /etc/kolla/venv/share/kolla-ansible/etc_examples/kolla/passwords.yml /etc/kolla
+      kolla-genpwd
+      kolla-ansible install-deps
+      kolla-ansible octavia-certificates
+
+  - name: Bootstrap servers
+    ansible.builtin.shell: |
+      set -x
+      . /etc/kolla/venv/bin/activate
+      kolla-ansible -i /etc/kolla/inventory bootstrap-servers
+
+  - name: Run prechecks
+    ansible.builtin.shell: |
+      set -x
+      . /etc/kolla/venv/bin/activate
+      kolla-ansible -i /etc/kolla/inventory prechecks
+
+  - name: Run deploy
+    ansible.builtin.shell: |
+      set -x
+      . /etc/kolla/venv/bin/activate
+      kolla-ansible -i /etc/kolla/inventory deploy
+
+  - name: Run post-deploy
+    ansible.builtin.shell: |
+      set -x
+      . /etc/kolla/venv/bin/activate
+      kolla-ansible -i /etc/kolla/inventory post-deploy
+
+  - name: Create /etc/openstack directory
+    ansible.builtin.file:
+      path: /etc/openstack
+      state: directory
+      mode: '0755'
+      owner: "{{ ssh_user }}"
+      group: "{{ ssh_user }}"
+    become: true
+
+  - name: Populate /etc/openstack directory
+    ansible.builtin.copy:
+      src: /etc/kolla/clouds.yaml
+      src: /etc/openstack/clouds.yaml
+      remote_src: true
