@@ -163,13 +163,13 @@
       fstype: "{{ fstype }}"
       state: mounted
 
-  - name: "Check for cinder disk"
+  - name: Check for cinder disk
     ansible.builtin.stat:
       path: "{{ cinder_disk }}"
     register: cinder_check
 
   - name: Create a volume group for cinder
     community.general.lvg:
-      vg: cinder_volumes
+      vg: cinder-volumes
       pvs: "{{ cinder_disk }}"
     when: cinder_check.stat.exists
