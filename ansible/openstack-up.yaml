@@ -69,9 +69,11 @@
     become: true
 
   - name: Copy inventory file
-    ansible.builtin.copy:
-      src: files/inventory
+    ansible.builtin.template:
+      src: templates/kolla-inventory.j2
       dest: /etc/kolla/inventory
+    vars:
+      host: "{{ hostvars['host-00']['ansible_host'] }}"
 
   # This is already a jinja2 template, so we need to use custom markers
   # This also affects templated variables in `vars`
