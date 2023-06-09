@@ -1,0 +1,104 @@
+---
+- hosts: localhost
+  gather_facts: false
+  vars_files:
+  - terraform_vars.yml
+  name: Get hosts from terraform
+  tasks:
+  - name: Extract terraform variables
+    community.general.terraform:
+      project_path: "../terraform"
+      state: present
+      variables: "{{ terraform_vars }}"
+      overwrite_init: false
+    check_mode: true
+    register: terraform
+
+  - name: Extract bastion public ip
+    ansible.builtin.set_fact:
+      bastion_public_ip: "{{ terraform.outputs.bastion.value.public_ip }}"
+
+  - name: Add bastion host
+    ansible.builtin.add_host:
+      name: bastion
+      ansible_host: "{{ bastion_public_ip }}"
+      ansible_user: "{{ ssh_user }}"
+      # Disable host key checking
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+
+      internal_ip: "{{ terraform.outputs.bastion.value.private_ip }}"
+
+  - name: Add OpenStack hosts
+    ansible.builtin.add_host:
+      name: "{{ item.name }}"
+      groups:
+      - openstack
+      ansible_host: "{{ item.private_ip }}"
+      ansible_user: "{{ ssh_user }}"
+      # Use bastion as jump host, disabling host key checking everywhere
+      ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {{ ssh_user }}@{{ bastion_public_ip }}\""
+    loop: "{{ terraform.outputs.hosts.value }}"
+
+- hosts: bastion
+  gather_facts: false
+  name: Create OpenStack resources
+  tasks:
+  # TODO: Create projects, users
+  - name: Create flavors
+    ansible.builtin.shell: |
+      if ! openstack flavor show m1.tiny; then
+          openstack flavor create --ram 1024 --disk 10 --vcpu 1 --public m1.tiny
+      fi
+      if ! openstack flavor show m1.small; then
+          openstack flavor create --ram 2048 --disk 15 --vcpu 1 --public m1.small
+      fi
+      if ! openstack flavor show m1.medium; then
+          openstack flavor create --ram 4096 --disk 20 --vcpu 2 --public m1.medium
+      fi
+      if ! openstack flavor show m1.large; then
+          openstack flavor create --ram 8192 --disk 25 --vcpu 4 --public m1.large
+      fi
+      if ! openstack flavor show m1.xlarge; then
+          openstack flavor create --ram 16384 --disk 40 --vcpu 4 --public m1.xlarge
+      fi
+    environment:
+      OS_CLOUD: kolla-admin
+
+  - name: Create image
+    ansible.builtin.shell: |
+      if ! openstack image show cirros-0.6.2-x86_64-disk; then
+          curl -L https://download.cirros-cloud.net/0.6.2/cirros-0.6.2-x86_64-disk.img > /tmp/cirros-0.6.2-x86_64-disk.img
+          openstack image create --public --container-format bare --disk-format qcow2 --property hw_rng_model=virtio --file /tmp/cirros-0.6.2-x86_64-disk.img cirros-0.6.2-x86_64-disk
+      fi
+    environment:
+      OS_CLOUD: kolla-admin
+
+  - name: Create public network
+    ansible.builtin.shell: |
+      if ! openstack network show public; then
+          openstack network create --provider-network-type flat --provider-physical-network physnet1 --share public
+      fi
+      if ! openstack subnet show public-subnet; then
+          openstack subnet create --network public --ip-version 4 --subnet-range 192.168.234.0/23 --no-dhcp public-subnet
+      fi
+    environment:
+      OS_CLOUD: kolla-admin
+
+  - name: Create basic security group which allows SSH
+    ansible.builtin.shell: |
+      if ! openstack security group show allow_ssh; then
+          openstack security group create allow_ssh --project openshift
+          openstack security group rule create --protocol tcp --dst-port 22 --project openshift allow_ssh
+      fi
+    environment:
+      OS_CLOUD: kolla-admin
+
+  - name: Create basic security group which allows ping
+    ansible.builtin.shell: |
+      if ! openstack security group show allow_ping; then
+          openstack security group create allow_ping --project openshift
+          openstack security group rule create --protocol icmp --project openshift allow_ping
+          openstack security group rule create --protocol ipv6-icmp --project openshift allow_ping
+      fi
+    environment:
+      OS_CLOUD: kolla-admin
