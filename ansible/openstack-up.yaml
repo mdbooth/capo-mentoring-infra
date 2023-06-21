@@ -57,6 +57,15 @@
       - gcc
       - libssl-dev
       - python3-venv
+      - python3-openstackclient
+    become: true
+
+  - name: Create dummy network device for provider networking
+    ansible.builtin.shell: |
+      if ! ip tuntap list | grep br_ex_port ; then
+          ip tuntap add mode tap br_ex_port
+          ip link set dev br_ex_port up
+      fi
     become: true
 
   - name: Create /etc/kolla directory
@@ -170,3 +179,27 @@
       src: /etc/kolla/clouds.yaml
       dest: /etc/openstack/clouds.yaml
       remote_src: true
+
+  - name: Configure NAT for the host
+    ansible.builtin.shell: |
+      if ! ip a show dev br-ex | grep ${EXT_NET_GATEWAY} ; then
+          ip a add ${EXT_NET_GATEWAY}/255.255.255.0 dev br-ex
+          iptables -t nat -A POSTROUTING -s ${EXT_NET_CIDR} -o eth0 -j MASQUERADE
+          echo 1 > /proc/sys/net/ipv4/ip_forward
+          iptables -A FORWARD -i br-ex -o eth0 -j ACCEPT
+          iptables -A FORWARD -i eth0 -o br-ex -j ACCEPT
+      fi
+    environment:
+      EXT_NET_GATEWAY: "{{ provider_cidr | ansible.utils.nthhost(1) }}"
+      EXT_NET_CIDR: "{{ provider_cidr }}"
+    become: true
+
+  # FIXME: This should only run once. Perhaps we should do this ourselves in Ansible?
+  - name: Run initonce script
+    ansible.builtin.shell: |
+      . /etc/kolla/venv/bin/activate
+      /etc/kolla/venv/share/kolla-ansible/init-runonce
+    environment:
+      EXT_NET_GATEWAY: "{{ provider_cidr | ansible.utils.nthhost(1) }}"
+      EXT_NET_CIDR: "{{ provider_cidr }}"
+      EXT_NET_RANGE: "start={{ provider_cidr | ansible.utils.nthhost(2),end={{ provider_cidr | ansible.utils.nthhost(-2) }}

@@ -116,28 +116,6 @@
       user_wireguard_ip: "{{ item.value.allowed_ips }}"
     loop: "{{ wireguard_users | dict2items }}"
 
-## Configure provider0 interface on bastion and first host
-- hosts: bastion host-00
-  become: true
-  tasks:
-  - name: Write provider netplan
-    ansible.builtin.template:
-      src: templates/provider.yaml.j2
-      dest: "/etc/netplan/60-provider.yaml"
-    vars:
-      configs:
-        bastion:
-          local_ip: "{{ hostvars['bastion']['internal_ip'] }}"
-          remote_ip: "{{ hostvars['host-00']['ansible_host'] }}"
-          tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(1) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
-        host-00:
-          local_ip: "{{ hostvars['host-00']['ansible_host'] }}"
-          remote_ip: "{{ hostvars['bastion']['internal_ip'] }}"
-          tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(2) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
-  - name: Apply provider netplan
-    ansible.builtin.shell:
-      cmd: netplan apply
-
 - hosts: openstack
   become: true
   vars:
