@@ -168,5 +168,5 @@
   - name: Populate /etc/openstack directory
     ansible.builtin.copy:
       src: /etc/kolla/clouds.yaml
-      dst: /etc/openstack/clouds.yaml
+      dest: /etc/openstack/clouds.yaml
       remote_src: true
