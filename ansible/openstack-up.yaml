@@ -110,6 +110,19 @@
       virtualenv: /etc/kolla/venv
       virtualenv_command: python3 -m venv
 
+  - name: Create /etc/ansible directory
+    ansible.builtin.file:
+      path: /etc/ansible
+      state: directory
+      mode: '0755'
+    become: true
+
+  - name: Configure ansible
+    ansible.builtin.copy:
+      src: files/ansible.cfg
+      dest: /etc/ansible/ansible.cfg
+    become: true
+
   - name: Initial configuration
     ansible.builtin.shell: |
       set -x
