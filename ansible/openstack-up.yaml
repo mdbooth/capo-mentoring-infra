@@ -39,7 +39,7 @@
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {{ ssh_user }}@{{ bastion_public_ip }}\""
     loop: "{{ terraform.outputs.hosts.value }}"
 
-- hosts: bastion
+- hosts: host-00
   name: Deploy OpenStack using Kolla-Ansible
   tasks:
   - name: Update all packages to their latest version
@@ -73,7 +73,7 @@
       src: templates/kolla-inventory.j2
       dest: /etc/kolla/inventory
     vars:
-      host: "{{ hostvars['host-00']['ansible_host'] }}"
+      host: "localhost       ansible_connection=local"
 
   # This is already a jinja2 template, so we need to use custom markers
   # This also affects templated variables in `vars`
