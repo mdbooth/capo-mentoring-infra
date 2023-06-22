@@ -70,8 +70,8 @@
 
   - name: Copy inventory file
     ansible.builtin.template:
-      src: templates/kolla-inventory.j2
-      dest: /etc/kolla/inventory
+      src: "templates/kolla/inventory.j2"
+      dest: "/etc/kolla/inventory"
     vars:
       host: "localhost       ansible_connection=local"
 
@@ -80,8 +80,8 @@
   # https://github.com/ansible/ansible/issues/43886
   - name: Copy globals.yml file
     ansible.builtin.template:
-      src: templates/globals.yml.j2
-      dest: /etc/kolla/globals.yml
+      src: "templates/kolla/globals.yml.j2"
+      dest: "/etc/kolla/globals.yml"
       block_start_string: "<%"
       block_end_string: "%>"
       variable_start_string: "<<"
