@@ -5,11 +5,6 @@
   - terraform_vars.yml
 
   tasks:
-  - name: Big Red Button
-    fail:
-      msg: "Set really_really_destroy=true"
-    when: really_really_destroy is not defined or really_really_destroy != "true"
-
   - name: Terraform destroy
     community.general.terraform:
       project_path: "../terraform"
