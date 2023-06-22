@@ -1,19 +1,21 @@
 # These initial groups are the only groups required to be modified. The
 # additional groups are for more control of the environment.
 [control]
-{{ host }}
+{{ controller }}
 
 [network]
-{{ host }}
+{{ controller }}
 
 [compute]
-{{ host }}
+{{ controller }}
+{{ compute }}
 
 [storage]
-{{ host }}
+{{ controller }}
+{{ compute }}
 
 [monitoring]
-{{ host }}
+{{ controller }}
 
 [deployment]
 localhost       ansible_connection=local

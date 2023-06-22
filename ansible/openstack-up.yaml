@@ -73,7 +73,8 @@
       src: "templates/kolla/inventory.j2"
       dest: "/etc/kolla/inventory"
     vars:
-      host: "localhost       ansible_connection=local"
+      controller: "host-00"
+      compute: "host-01"
 
   # This is already a jinja2 template, so we need to use custom markers
   # This also affects templated variables in `vars`

@@ -60,10 +60,16 @@ variable "hosts" {
     size        = string
     extra_disks = list(number)
   }))
-  default = [{
-    size        = "Standard_E2as_v5"
-    extra_disks = [500]
-  }]
+  default = [
+    {
+      size        = "Standard_E2as_v5"
+      extra_disks = [500]
+    },
+    {
+      size        = "Standard_E2as_v5"
+      extra_disks = [500]
+    }
+  ]
 }
 
 # The size in GB of an external disk attached to each host VM for nova
