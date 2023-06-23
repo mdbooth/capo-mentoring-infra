@@ -39,8 +39,8 @@
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {{ ssh_user }}@{{ bastion_public_ip }}\""
     loop: "{{ terraform.outputs.hosts.value }}"
 
-- hosts: host-00
-  name: Deploy OpenStack using Kolla-Ansible
+- hosts: openstack
+  name: Update hosts
   tasks:
   - name: Update all packages to their latest version
     ansible.builtin.apt:
@@ -61,6 +61,29 @@
       update_cache: true
     become: true
 
+- hosts: host-01
+  name: Install docker
+  tasks:
+  - name: Add Docker GPG key
+    ansible.builtin.apt_key:
+      url: https://download.docker.com/linux/ubuntu/gpg
+    become: true
+
+  - name: Add Docker APT repository
+    ansible.builtin.apt_repository:
+      repo: deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+    become: true
+
+  - name: Install packages
+    ansible.builtin.apt:
+      pkg:
+      - docker-ce
+      - python3-docker
+      update_cache: true
+    become: true
+
+- hosts: host-00
+  name: Deploy OpenStack using Kolla-Ansible
   - name: Create /etc/kolla directory
     ansible.builtin.file:
       path: /etc/kolla
