@@ -4,9 +4,6 @@ network:
       mode: vxlan
       id: 16
       local: {{ configs[inventory_hostname].local_ip }}
-{% for remote_ip in configs[inventory_hostname].remote_ips %}
-      remote: {{ remote_ip }}
-{% endfor %}
+      remote: {{ configs[inventory_hostname].remote_ip }}
       addresses: [ {{ configs[inventory_hostname].tunnel_ip }} ]
-      mac-learning: true
   version: 2

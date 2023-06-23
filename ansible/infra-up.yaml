@@ -169,8 +169,8 @@
       user_wireguard_ip: "{{ item.value.allowed_ips }}"
     loop: "{{ wireguard_users | dict2items }}"
 
-## Configure provider0 interface on all hosts
-- hosts: bastion openstack
+## Configure provider0 interface on bastion and first host
+- hosts: bastion host-00
   become: true
   tasks:
   - name: Write provider netplan
@@ -178,64 +178,18 @@
       src: "templates/netplan/60-provider.yaml.j2"
       dest: "/etc/netplan/60-provider.yaml"
     vars:
-      # TODO: Ideally we want a loop here so we can handle an arbitrary number
-      # of hosts. This limits us to a bastion and two hosts.
       configs:
         bastion:
           local_ip: "{{ hostvars['bastion']['internal_ip'] }}"
-          remote_ips:
-          - "{{ hostvars['host-00']['ansible_host'] }}"
-          - "{{ hostvars['host-01']['ansible_host'] }}"
+          remote_ip: "{{ hostvars['host-00']['ansible_host'] }}"
           tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(1) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
         host-00:
           local_ip: "{{ hostvars['host-00']['ansible_host'] }}"
-          remote_ips:
-          - "{{ hostvars['bastion']['internal_ip'] }}"
-          - "{{ hostvars['host-01']['ansible_host'] }}"
+          remote_ip: "{{ hostvars['bastion']['internal_ip'] }}"
           tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(2) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
-        host-01:
-          local_ip: "{{ hostvars['host-01']['ansible_host'] }}"
-          remote_ips:
-          - "{{ hostvars['bastion']['internal_ip'] }}"
-          - "{{ hostvars['host-00']['ansible_host'] }}"
-          tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(3) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
   - name: Apply provider netplan
     ansible.builtin.shell:
       cmd: netplan apply
-
-- hosts: bastion
-  become: yes
-  tasks:
-  - name: Configure NAT for provider network CIDR
-    ansible.builtin.shell: |
-      if ! iptables -t nat -L POSTROUTING | grep {{ provider_cidr }}; then
-          iptables -t nat -A POSTROUTING -s {{ provider_cidr }} -o eth0 -j MASQUERADE
-      fi
-
-- hosts: bastion openstack
-  become: true
-  tasks:
-  - name: Configure forwarding entries for all nodes, avoiding multicast
-    ansible.builtin.shell: |
-      additional_ips=({{ configs[inventory_hostname]|join(" ") }})
-      for additional_ip in "${additional_ips[@]}"; do
-          # This is idempotent
-          bridge fdb append to 00:00:00:00:00:00 dst ${additional_ip} dev provider0
-      done
-    args:
-      executable: /bin/bash
-    vars:
-      # TODO: We can do this better, but how?
-      configs:
-        bastion:
-          - "{{ provider_cidr | ansible.utils.nthhost(2) }}"
-          - "{{ provider_cidr | ansible.utils.nthhost(3) }}"
-        host-00:
-          - "{{ provider_cidr | ansible.utils.nthhost(1) }}"
-          - "{{ provider_cidr | ansible.utils.nthhost(3) }}"
-        host-01:
-          - "{{ provider_cidr | ansible.utils.nthhost(1) }}"
-          - "{{ provider_cidr | ansible.utils.nthhost(2) }}"
 
 - hosts: openstack
   become: true

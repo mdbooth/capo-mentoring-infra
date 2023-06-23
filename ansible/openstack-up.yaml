@@ -171,25 +171,3 @@
       src: /etc/kolla/clouds.yaml
       dest: /etc/openstack/clouds.yaml
       remote_src: true
-
-# TODO: This is kind of gross but I was lazy. Do better, Stephen!
-- hosts: openstack
-  become: true
-  tasks:
-
-  - name: Configure br-ex IP address
-    ansible.builtin.shell: |
-      export EXT_NET_IP={{ configs[inventory_hostname].tunnel_ip }}
-      if ! ip a list dev br-ex | grep ${EXT_NET_IP}; then
-          ip a add ${EXT_NET_IP} dev br-ex
-      fi
-    vars:
-      configs:
-        host-00:
-          tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(2) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
-        host-01:
-          tunnel_ip: "{{ provider_cidr | ansible.utils.nthhost(3) }}/{{ provider_cidr | ansible.utils.ipaddr('prefix') }}"
-
-  - name: Bring br-ex up
-    ansible.builtin.shell: |
-      ip link set dev br-ex up
