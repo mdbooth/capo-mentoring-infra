@@ -39,6 +39,7 @@
       ansible_user: "{{ ssh_user }}"
       # Use bastion as jump host, disabling host key checking everywhere
       ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand=\"ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p {{ ssh_user }}@{{ bastion_public_ip }}\""
+
     loop: "{{ terraform.outputs.hosts.value }}"
 
 - hosts: bastion openstack
@@ -47,17 +48,17 @@
   - ssh_keys
   - hosts
 
-- hosts: bastion
+- hosts: bastion openstack
   tasks:
   - name: Generate keypair
     community.crypto.openssh_keypair:
       path: "~/.ssh/id_rsa"
       type: rsa
-    register: bastion_ssh_keypair
+    register: ssh_keypair
 
-  - name: Store bastion public key
+  - name: Store public key
     ansible.builtin.set_fact:
-      bastion_public_key: "{{ bastion_ssh_keypair.public_key }}"
+      public_key: "{{ ssh_keypair.public_key }}"
 
 - hosts: openstack
   tasks:
@@ -65,7 +66,55 @@
       ansible.posix.authorized_key:
         user: "{{ ssh_user }}"
         state: present
-        key: "{{ hostvars['bastion']['bastion_public_key'] }}"
+        key: "{{ hostvars[item]['public_key'] }}"
+      with_items: "{{ groups['all'] }}"
+
+- hosts: openstack
+  gather_facts: no
+  tasks:
+  - name: Get all host keys
+    ansible.builtin.command:
+      cmd: "ssh-keyscan -t ecdsa {{ hostvars[inventory_hostname].ansible_host|default(inventory_hostname) }}"
+    # we run this on the bastion since localhost won't have access to the other hosts until wireguard is up
+    delegate_to: "bastion"
+    register: "host_keys"
+    changed_when: false
+
+  - name: Ensure we found SSH keys
+    ansible.builtin.assert:
+      that: host_keys.stdout
+      msg: "We did not get SSH key for {{inventory_hostname}}"
+
+- hosts: bastion openstack
+  vars:
+  - known_hosts: "~/.ssh/known_hosts"
+  tasks:
+  - name: Stat known_hosts file for existance
+    ansible.builtin.stat:
+      path: "{{ known_hosts }}"
+    register: fstat
+
+  - name: Create known_hosts file if non-existing
+    ansible.builtin.copy:
+      content: "\n"
+      dest: "{{ known_hosts }}"
+    when: "not fstat.stat.exists"
+    changed_when: false
+
+  - name: Configure known_hosts file
+    ansible.builtin.blockinfile:
+      dest: "{{known_hosts}}"
+      marker: "# {mark} This part managed by Ansible"
+      block: |
+        {% for h in groups['openstack'] | sort if hostvars[h].host_keys is defined and hostvars[h].host_keys.stdout is defined  %}
+        {%  if hostvars[h].ansible_port is defined %}
+        {%   for key in hostvars[h].host_keys.stdout_lines %}
+        {{ h }},{{ key.partition(" ")[0] }} {{ key.partition(" ")[2] }}
+        {%   endfor %}
+        {%  else %}
+        {{ h }},{{ hostvars[h].host_keys.stdout }}
+        {%  endif %}
+        {% endfor %}
 
 - hosts: bastion
   become: yes
