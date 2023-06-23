@@ -2,9 +2,24 @@
 wireguard_cidr: 192.168.232.0/23
 bastion_wireguard_ip: "{{ wireguard_cidr | ansible.utils.nthhost(1) }}/32"
 wireguard_users:
-  mbooth_wsl:
+  mbooth_windows:
     public_key: xeWF5EtbXMECGZ3R3DQWrsYbNUd0/tsn55PL3vY21DI=
     allowed_ips: 192.168.232.2/32
   stephenfin:
     public_key: nWO8vTcj4/sPmXL1UM5ACK21J7MDleCP2zJzNfiKp20=
     allowed_ips: 192.168.232.3/32
+  switt:
+    public_key: IQKL4/VqFmcEBVaIJXGPS9sx4vBAzt1iCmhFUyF4IRM=
+    allowed_ips: 192.168.232.4/32
+  shu:
+    public_key: ZYCCK9DIYo4NqdxMj2tyKWSFVwACKLrS7eROGkf8/As=
+    allowed_ips: 192.168.232.5/32
+  anastasr:
+    public_key: CoTH7Juku6ELznHnO6gszQaRAbhpqUY5p5QWuKvQkWg=
+    allowed_ips: 192.168.232.6/32
+  jddaggett:
+    public_key: HbZn4JtjUcRyuQluxgIcHwhxbq2r+0FX8F7HUIAtYR4=
+    allowed_ips: 192.168.232.7/32
+  mbooth_wsl:
+    public_key: 8UBjoPwCBscy3mciLqAUR6wamBjdm4ww85cDAhEGFmg=
+    allowed_ips: 192.168.232.8/32
