@@ -46,6 +46,7 @@
     ansible.builtin.apt:
       name: "*"
       state: latest
+      update_cache: true
     become: true
 
   - name: Install packages
@@ -57,6 +58,7 @@
       - gcc
       - libssl-dev
       - python3-venv
+      update_cache: true
     become: true
 
   - name: Create /etc/kolla directory
