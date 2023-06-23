@@ -16,6 +16,10 @@
     ansible.builtin.set_fact:
       bastion_public_ip: "{{ terraform.outputs.bastion.value.public_ip }}"
 
+  - name: Print bastion public ip
+    ansible.builtin.debug:
+      msg: "Bastion IP: {{ bastion_public_ip }}"
+
   - name: Add bastion host
     ansible.builtin.add_host:
       name: bastion
