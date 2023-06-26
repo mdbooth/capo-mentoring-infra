@@ -18,7 +18,7 @@ wireguard_users:
     public_key: CoTH7Juku6ELznHnO6gszQaRAbhpqUY5p5QWuKvQkWg=
     allowed_ips: 192.168.232.6/32
   jddaggett:
-    public_key: HbZn4JtjUcRyuQluxgIcHwhxbq2r+0FX8F7HUIAtYR4=
+    public_key: PsjzkmRkJlJlWCjq50I5c9Q4DCB9rMbv0LLcHrqwfho=
     allowed_ips: 192.168.232.7/32
   mbooth_wsl:
     public_key: 8UBjoPwCBscy3mciLqAUR6wamBjdm4ww85cDAhEGFmg=
