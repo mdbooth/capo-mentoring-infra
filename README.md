@@ -1,5 +1,9 @@
 # CAPO mentoring infra
 
+A collection of playbooks to deploy a two-node OpenStack deployment on Azure.
+This was used when mentoring students that were working on Cluster API Provider
+OpenStack (CAPO).
+
 ## Quickstart
 
 ```bash
@@ -22,10 +26,24 @@ ansible-playbook ./ansible/openstack-up.yaml
 Configure OpenStack:
 
 > **NOTE**
-> Currently untested.
+> This is incomplete and untested. A document describing actual steps taken can
+> be found [here](doc/prepare-stack.md).
 
 ```
 ansible-playbook ./ansible/prepare-stack.yaml
+```
+
+## Debugging
+
+As this is a standard Kolla-Ansible deployment, everything is deployed in
+Docker containers.
+
+```
+docker ps
+```
+
+```bash
+docker exec -ti nova_libvirt bash
 ```
 
 ## References
