@@ -23,3 +23,9 @@ wireguard_users:
   mbooth_wsl:
     public_key: 8UBjoPwCBscy3mciLqAUR6wamBjdm4ww85cDAhEGFmg=
     allowed_ips: 192.168.232.8/32
+  shu_linux:
+    public_key: vZLGLQx228H3FSBYJ7W76VBNPbm+t4izCxB1NJ6EjB8=
+    allowed_ips: 192.168.232.9/32
+  switt_linux:
+    public_key: Oe0Brktk5AHXEFaLf1MGV4zUFYGJmKufSlSEm4Ampho=
+    allowed_ips: 192.168.232.10/32
