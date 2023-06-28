@@ -89,6 +89,7 @@ for user in ${users[@]}; do
     openstack user create \
       --project capo --password "${pass}" "${user}"
     openstack role add --user "${user}" --project capo admin
+    openstack role add --user "${user}" --project capo load-balancer_admin
     openstack group add user mentors "${user}"
     echo "user: ${user}"
     echo "pass: ${pass}"
@@ -102,6 +103,7 @@ for user in ${users[@]}; do
     openstack user create \
       --project capo --password "${pass}" "${user}"
     openstack role add --user "${user}" --project capo member
+    openstack role add --user "${user}" --project capo load-balancer_member
     openstack group add user students "${user}"
     echo "user: ${user}"
     echo "pass: ${pass}"
