@@ -35,6 +35,12 @@ export DEMO_NET_CIDR='10.0.0.0/24'
 export DEMO_NET_GATEWAY='10.0.0.1'
 export DEMO_NET_DNS='8.8.8.8'
 
+openstack network create --external --provider-physical-network physnet1 \
+    --provider-network-type flat public1
+openstack subnet create --no-dhcp --ip-version 4 \
+    --allocation-pool ${EXT_NET_RANGE} --network public1 \
+    --subnet-range ${EXT_NET_CIDR} --gateway ${EXT_NET_GATEWAY} public1-subnet
+
 openstack network create demo-net
 openstack subnet create --ip-version 4 \
     --subnet-range ${DEMO_NET_CIDR} --network demo-net \
@@ -43,11 +49,6 @@ openstack subnet create --ip-version 4 \
 
 openstack router create demo-router
 openstack router add subnet demo-router demo-subnet
-openstack network create --external --provider-physical-network physnet1 \
-    --provider-network-type flat public1
-openstack subnet create --no-dhcp --ip-version 4 \
-    --allocation-pool ${EXT_NET_RANGE} --network public1 \
-    --subnet-range ${EXT_NET_CIDR} --gateway ${EXT_NET_GATEWAY} public1-subnet
 openstack router set --external-gateway public1 demo-router
 ```
 
