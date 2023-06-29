@@ -1,0 +1,4 @@
+- op: add
+  path: /spec/template/spec/securityGroups
+  value:
+  - name: allow_ssh_icmp

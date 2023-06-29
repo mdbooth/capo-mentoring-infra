@@ -1,0 +1,13 @@
+resources:
+- openstack-cloud-controller-manager-ds.yaml
+- cloud-controller-manager-role-bindings.yaml
+- cloud-controller-manager-roles.yaml
+- cloud-config-secret.yaml
+- cloud-credentials-secret.yaml
+
+patches:
+- target:
+    kind: DaemonSet
+    name: openstack-cloud-controller-manager
+    namespace: kube-system
+  path: patch-ccm-ds.yaml

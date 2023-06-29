@@ -1,0 +1,12 @@
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    mountPath: /etc/openstack
+    name: cloud-credentials
+    readOnly: true
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    secret:
+      secretName: cloud-credentials
+    name: cloud-credentials

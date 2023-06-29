@@ -1,0 +1,15 @@
+# Copy your clouds.yaml to ./capo-clouds.yaml
+# OPENSTACK_CLOUD: the name of the entry to use in capo-clouds.yaml
+# OPENSTACK_SSH_KEY_NAME: the name of the ssh keypair you previously created
+
+export KUBERNETES_VERSION=1.27.3
+#export OPENSTACK_CLOUD=mbooth-azure
+export OPENSTACK_CLOUD_CACERT_B64=""
+export OPENSTACK_CLOUD_YAML_B64=$(cat ./capo-clouds.yaml | base64 -w0)
+export OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR="m1.medium"
+export OPENSTACK_DNS_NAMESERVERS=8.8.8.8
+export OPENSTACK_EXTERNAL_NETWORK_ID=e8bf9efa-d216-4189-9a35-36f5c9f04485
+export OPENSTACK_FAILURE_DOMAIN=nova
+export OPENSTACK_IMAGE_NAME=ubuntu-2004-kube-1.27.3
+export OPENSTACK_NODE_MACHINE_FLAVOR="m1.medium"
+#export OPENSTACK_SSH_KEY_NAME="mbooth-yubikey"
