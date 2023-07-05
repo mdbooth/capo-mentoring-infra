@@ -30,15 +30,16 @@ allows us to automatically install things in the deployed cluster.
 
 ## Configure `vars`
 
-Copy `vars.tmpl` to vars, and fill out any necessary values. `vars` is used by the
+Copy `vars.tmpl` to `vars` and fill out any necessary values. `vars` is used by the
 Makefile when executing `clusterctl generate <foo>` as the source of template
 values.
 
 ## Create a workload cluster
 
-Create a cluster yaml with `make capo-cluster.yaml CLUSTER_NAME=<foo>`. This:
+Create a cluster YAML with `make capo-cluster.yaml CLUSTER_NAME=<foo>`. This:
 
 * Uses the kustomize configuration in the `cluster` directory
+
     * Based on the `without-lb` template from CAPO release 0.7
     * Adds CCM, which is required since kubernetes 1.26
 
@@ -53,7 +54,7 @@ Inspect and modify this file if desired before creating the cluster with
 > you risk getting weird errors about annotations being too large due to the way
 > client-side apply works.
 
-You can generate the cluster yaml and apply in a single step with
+You can generate the cluster YAML and apply in a single step with
 `make cluster-apply`.
 
 ## Get kubeconfig for the workload cluster
@@ -62,10 +63,10 @@ You can generate the cluster yaml and apply in a single step with
 clusterctl get kubeconfig <foo> > kubeconfig
 ```
 
-Use this kubeconfig with `export KUBECONFIG=$(pwd)/kubeconfig`.
+Use this `kubeconfig` with `export KUBECONFIG=$(pwd)/kubeconfig`.
 
-You can then, e.g. inspect nodes on the workload cluster. Note that, unless
-you've done the next step, they won't be Ready.
+You can then e.g. inspect nodes on the workload cluster. Note that, unless
+you've done the next step, they won't be `Ready`.
 
 ## Install services in the workload cluster to make the nodes ready
 
@@ -75,7 +76,7 @@ you've done the next step, they won't be Ready.
 > installed.
 
 There's another kustomize directory, `cluster-resources`, which combines a CNI
-and CCM configuration. You can generate yamls with
+and CCM configuration. You can generate YAMLs with
 `kustomize build cluster-resources/`. Note that these still need to be
 templated by `clusterctl generate yaml` before use.
 
